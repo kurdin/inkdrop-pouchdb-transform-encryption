@@ -1,0 +1,2 @@
+[ignore]
+.*/node_modules/inkdrop-crypto/lib/crypto.js.flow

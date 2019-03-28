@@ -1,0 +1,67 @@
+{
+  "name": "inkdrop-pouchdb-transform-encryption",
+  "version": "1.0.0",
+  "description": "PouchDB plugin for adding end-to-end encryption capability for Inkdrop",
+  "main": "lib/index.js",
+  "scripts": {
+    "dev": "babel src --watch --out-dir ./lib",
+    "build": "babel src -d lib && flow-copy-source src lib",
+    "test": "DEBUG=inkdrop-crypto:* ava",
+    "lint": "eslint src test",
+    "flow": "flow check",
+    "prepublishOnly": "npm-run-all lint flow build test"
+  },
+  "keywords": [
+    "pouchdb",
+    "inkdrop"
+  ],
+  "author": "Takuya Matsuyama <t@inkdrop.app>",
+  "license": "MIT License",
+  "devDependencies": {
+    "@babel/core": "^7.4.0",
+    "@babel/plugin-proposal-class-properties": "^7.4.0",
+    "@babel/plugin-proposal-object-rest-spread": "^7.4.0",
+    "@babel/preset-env": "^7.4.2",
+    "@babel/preset-flow": "^7.0.0",
+    "@babel/register": "^7.4.0",
+    "ava": "^1.4.1",
+    "axios": "^0.18.0",
+    "babel-eslint": "^10.0.1",
+    "eslint": "^5.15.3",
+    "eslint-config-prettier": "^4.1.0",
+    "eslint-plugin-flowtype": "^3.4.2",
+    "eslint-plugin-prettier": "^3.0.1",
+    "express": "^4.16.4",
+    "express-pouchdb": "^4.1.0",
+    "flow-bin": "^0.95.1",
+    "flow-copy-source": "^2.0.3",
+    "inkdrop-crypto": "^1.3.0",
+    "npm-run-all": "^4.1.5",
+    "pouchdb": "^7.0.0",
+    "pouchdb-adapter-memory": "^7.0.0",
+    "prettier": "^1.16.4",
+    "transform-pouch": "^1.1.4"
+  },
+  "dependencies": {
+    "debug": "^4.1.1"
+  },
+  "peerDependencies": {
+    "inkdrop-crypto": "^1.3.0"
+  },
+  "ava": {
+    "require": [
+      "@babel/register"
+    ],
+    "babel": {
+      "testOptions": {
+        "presets": [
+          "@ava/stage-4",
+          "@babel/preset-flow"
+        ]
+      }
+    }
+  },
+  "files": [
+    "lib"
+  ]
+}

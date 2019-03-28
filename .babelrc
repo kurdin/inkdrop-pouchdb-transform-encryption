@@ -1,0 +1,13 @@
+{
+  "presets": [
+    "@babel/preset-flow",
+    ["@babel/preset-env", {
+      "targets": { "electron": "3.0.14", "node": "11.12.0" },
+      "debug": false
+    }]
+  ],
+  "plugins": [
+    "@babel/plugin-proposal-object-rest-spread",
+    "@babel/plugin-proposal-class-properties"
+  ]
+}
