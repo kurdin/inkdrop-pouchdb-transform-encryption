@@ -140,7 +140,8 @@ test.serial('Encrypt file', async t => {
   }
   await remote.bulkDocs([srcFile])
   const { data: encrypted } = await axios.get(
-    `${dbUrl}/file:test?attachments=true`
+    `${dbUrl}/file:test?attachments=true`,
+    { headers: { accept: 'application/json' } }
   )
   t.is(typeof encrypted, 'object')
   t.is(typeof encrypted.encryptionData, 'object')
@@ -206,7 +207,8 @@ test.serial('Sync', async t => {
   })
 
   const { data: encrypted } = await axios.get(
-    `${dbUrl}/file:test2?attachments=true`
+    `${dbUrl}/file:test2?attachments=true`,
+    { headers: { accept: 'application/json' } }
   )
   t.is(typeof encrypted, 'object')
   t.is(typeof encrypted.encryptionData, 'object')
@@ -216,4 +218,12 @@ test.serial('Sync', async t => {
   t.is(typeof encrypted._attachments.index.data, 'string')
   t.is(encrypted.name, srcFile.name)
   t.not(encrypted._attachments.index.data, srcFile._attachments.index.data)
+
+  const { data } = await axios.get(
+    `${dbUrl}/_all_docs?include_docs=true&attachments=true`,
+    {
+      headers: { accept: 'application/json' }
+    }
+  )
+  t.log('All docs in remote:', data.rows.map(row => row.doc))
 })

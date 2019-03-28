@@ -1,5 +1,0 @@
-[Thu, 28 Mar 2019 07:44:43 GMT] [info] [<0.000.0>] ::ffff:127.0.0.1 - - GET /user-test/note:welcome 200
-[Thu, 28 Mar 2019 07:44:43 GMT] [info] [<0.000.0>] ::ffff:127.0.0.1 - - GET /user-test/book:Sy8EUpkA 200
-[Thu, 28 Mar 2019 07:44:43 GMT] [info] [<0.000.0>] ::ffff:127.0.0.1 - - GET /user-test/tag:HyBgJ94gx 200
-[Thu, 28 Mar 2019 07:44:43 GMT] [info] [<0.000.0>] ::ffff:127.0.0.1 - - GET /user-test/file:test?attachments=true 200
-[Thu, 28 Mar 2019 07:44:43 GMT] [info] [<0.000.0>] ::ffff:127.0.0.1 - - GET /user-test/file:test2?attachments=true 200
