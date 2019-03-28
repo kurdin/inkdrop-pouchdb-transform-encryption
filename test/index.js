@@ -16,7 +16,6 @@ const pouchDBServer = require('express-pouchdb')(InMemPouchDB, {
   inMemoryConfig: true
 })
 const server = express()
-const remote = new InMemPouchDB('user-test')
 
 const local = new PouchDB('local', { adapter: 'memory' })
 
@@ -26,6 +25,7 @@ const keyMasked = crypto.createEncryptionKey(pass)
 const key = crypto.revealEncryptionKey(pass, keyMasked)
 
 const dbUrl = `http://localhost:${serverPort}/user-test`
+const remote = new PouchDB(dbUrl)
 
 test.before('PouchDB loaded', t => {
   t.is(typeof remote, 'object')
@@ -197,7 +197,7 @@ test.serial('Sync', async t => {
       }
     }
   }
-  await local.bulkDocs([srcFile])
+  await local.put(srcFile)
 
   await new Promise((resolve, reject) => {
     local.replicate
