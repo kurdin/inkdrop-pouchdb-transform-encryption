@@ -21,47 +21,74 @@ export default class E2EETransformer {
     privateProps(this).key = key
   }
 
-  incoming = (doc: Object) => {
-    const { key } = privateProps(this)
-    if (!key) throw new EncryptError('No encryption key')
-    if (doc._id.startsWith('file:')) {
-      logger.debug('Encrypting file:', doc._id)
-      return this.crypto.encryptFile(key, doc)
-    } else if (
-      doc._id.startsWith('note:') ||
-      doc._id.startsWith('book:') ||
-      doc._id.startsWith('tag:')
-    ) {
-      logger.debug('Encrypting doc:', doc._id)
-      return this.crypto.encryptDoc(key, doc)
-    } else {
-      return doc
+  getRemoteTransformer = () => {
+    return {
+      incoming: (doc: Object) => {
+        const { key } = privateProps(this)
+        if (!key) throw new EncryptError('No encryption key')
+        if (doc._id.startsWith('file:')) {
+          logger.debug('Encrypting file:', doc._id)
+          return this.crypto.encryptFile(key, doc)
+        } else if (
+          doc._id.startsWith('note:') ||
+          doc._id.startsWith('book:') ||
+          doc._id.startsWith('tag:')
+        ) {
+          logger.debug('Encrypting doc:', doc._id)
+          return this.crypto.encryptDoc(key, doc)
+        } else {
+          return doc
+        }
+      },
+
+      outgoing: (doc: Object) => {
+        const { key } = privateProps(this)
+        if (!key) throw new DecryptError('No encryption key')
+        if (doc._id.startsWith('file:')) {
+          logger.debug('Decrypting file:', doc._id)
+          if (doc._attachments && doc._attachments.index) {
+            if (doc._attachments.index.stub) {
+              return doc
+            } else {
+              return this.crypto.decryptFile(key, doc)
+            }
+          } else {
+            return doc
+          }
+        } else if (
+          doc._id.startsWith('note:') ||
+          doc._id.startsWith('book:') ||
+          doc._id.startsWith('tag:')
+        ) {
+          logger.debug('Decrypting doc:', doc._id)
+          return this.crypto.decryptDoc(key, doc)
+        } else {
+          return doc
+        }
+      }
     }
   }
 
-  outgoing = (doc: Object) => {
-    const { key } = privateProps(this)
-    if (!key) throw new DecryptError('No encryption key')
-    if (doc._id.startsWith('file:')) {
-      logger.debug('Decrypting file:', doc._id)
-      if (doc._attachments && doc._attachments.index) {
-        if (doc._attachments.index.stub) {
-          return doc
+  getLocalTransformer = () => {
+    return {
+      incoming: (doc: Object) => {
+        const { key } = privateProps(this)
+        if (!key) throw new EncryptError('No encryption key')
+        if (doc._id.startsWith('file:')) {
+          logger.debug('Decrypting local file:', doc._id)
+          if (doc._attachments && doc._attachments.index) {
+            if (doc._attachments.index.stub) {
+              return doc
+            } else {
+              return this.crypto.decryptFile(key, doc)
+            }
+          } else {
+            return doc
+          }
         } else {
-          return this.crypto.decryptFile(key, doc)
+          return doc
         }
-      } else {
-        return doc
       }
-    } else if (
-      doc._id.startsWith('note:') ||
-      doc._id.startsWith('book:') ||
-      doc._id.startsWith('tag:')
-    ) {
-      logger.debug('Decrypting doc:', doc._id)
-      return this.crypto.decryptDoc(key, doc)
-    } else {
-      return doc
     }
   }
 }
