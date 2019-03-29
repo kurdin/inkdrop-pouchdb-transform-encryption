@@ -18,6 +18,7 @@
   "author": "Takuya Matsuyama <t@inkdrop.app>",
   "license": "MIT License",
   "devDependencies": {
+    "@babel/cli": "^7.2.3",
     "@babel/core": "^7.4.0",
     "@babel/plugin-proposal-class-properties": "^7.4.0",
     "@babel/plugin-proposal-object-rest-spread": "^7.4.0",
