@@ -27,8 +27,13 @@ export default class E2EETransformer {
         const { key } = privateProps(this)
         if (!key) throw new EncryptError('No encryption key')
         if (doc._id.startsWith('file:')) {
-          logger.debug('Encrypting file:', doc._id)
-          return this.crypto.encryptFile(key, doc)
+          if (doc.publicIn && doc.publicIn.length > 0) {
+            logger.debug('The file is in public. Skip encrypting:', doc._id)
+            return doc
+          } else {
+            logger.debug('Encrypting file:', doc._id)
+            return this.crypto.encryptFile(key, doc)
+          }
         } else if (
           doc._id.startsWith('note:') ||
           doc._id.startsWith('book:') ||
