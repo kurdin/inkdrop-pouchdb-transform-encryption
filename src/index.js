@@ -1,6 +1,7 @@
 // @flow
 import { InkdropEncryption, EncryptError, DecryptError } from 'inkdrop-crypto'
 import logger from './logger'
+import { NOTE_VISIBILITY } from 'inkdrop-model'
 
 type InternalProps = {
   key?: string
@@ -39,8 +40,16 @@ export default class E2EETransformer {
           doc._id.startsWith('book:') ||
           doc._id.startsWith('tag:')
         ) {
-          logger.debug('Encrypting doc:', doc._id)
-          return this.crypto.encryptDoc(key, doc)
+          if (doc.share === NOTE_VISIBILITY.PUBLIC) {
+            logger.debug(
+              'The note is shared in public. Skip encrypting:',
+              doc._id
+            )
+            return doc
+          } else {
+            logger.debug('Encrypting doc:', doc._id)
+            return this.crypto.encryptDoc(key, doc)
+          }
         } else {
           return doc
         }
