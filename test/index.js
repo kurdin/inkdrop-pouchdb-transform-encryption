@@ -21,7 +21,7 @@ const local = new PouchDB('local', { adapter: 'memory' })
 
 const crypto = createEncryptionHelper(require('crypto'))
 const pass = 'foo'
-const keyMasked = crypto.createEncryptionKey(pass)
+const keyMasked = crypto.createEncryptionKey(pass, 128)
 const key = crypto.revealEncryptionKey(pass, keyMasked)
 
 const dbUrl = `http://localhost:${serverPort}/user-test`
