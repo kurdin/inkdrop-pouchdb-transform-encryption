@@ -13,6 +13,9 @@ const privateProps = function(object: Object): InternalProps {
   return map.get(object) || {}
 }
 
+export type TransformErrorDetail = { error: Error, doc: Object }
+export type TransformErrorCallback = (detail: TransformErrorDetail) => any
+
 export default class E2EETransformer {
   emitter: Emitter
   crypto: InkdropEncryption
@@ -60,7 +63,7 @@ export default class E2EETransformer {
           }
         } catch (e) {
           logger.error(e.stack)
-          this.emitter.emit('error:encryption', e)
+          this.emitter.emit('error:encryption', { error: e, doc })
           throw e
         }
       },
@@ -92,7 +95,7 @@ export default class E2EETransformer {
           }
         } catch (e) {
           logger.error(e.stack)
-          this.emitter.emit('error:decryption', e)
+          this.emitter.emit('error:decryption', { error: e, doc })
           throw e
         }
       }
@@ -121,18 +124,18 @@ export default class E2EETransformer {
           }
         } catch (e) {
           logger.error(e.stack)
-          this.emitter.emit('error:decryption', e)
+          this.emitter.emit('error:decryption', { error: e, doc })
           throw e
         }
       }
     }
   }
 
-  onEncryptionError(callback: (e: Error) => any) {
+  onEncryptionError(callback: TransformErrorCallback) {
     return this.emitter.on('error:encryption', callback)
   }
 
-  onDecryptionError(callback: (e: Error) => any) {
+  onDecryptionError(callback: TransformErrorCallback) {
     return this.emitter.on('error:decryption', callback)
   }
 }
