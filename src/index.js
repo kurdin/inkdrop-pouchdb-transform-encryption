@@ -2,6 +2,7 @@
 import { InkdropEncryption, EncryptError, DecryptError } from 'inkdrop-crypto'
 import logger from './logger'
 import { NOTE_VISIBILITY } from 'inkdrop-model'
+import { Emitter } from 'event-kit'
 
 type InternalProps = {
   key?: string
@@ -13,13 +14,16 @@ const privateProps = function(object: Object): InternalProps {
 }
 
 export default class E2EETransformer {
+  emitter: Emitter
   crypto: InkdropEncryption
   reporter: ?Object
 
   constructor(crypto: InkdropEncryption, reporter: ?Object) {
     this.crypto = crypto
     this.reporter = reporter
+    this.emitter = new Emitter()
   }
+
   setKey(key: string) {
     privateProps(this).key = key
   }
@@ -58,6 +62,7 @@ export default class E2EETransformer {
           }
         } catch (e) {
           logger.error(e.stack)
+          this.emitter.emit('error:encryption', e)
           if (this.reporter) {
             this.reporter.notify(e)
           }
@@ -92,6 +97,7 @@ export default class E2EETransformer {
           }
         } catch (e) {
           logger.error(e.stack)
+          this.emitter.emit('error:decryption', e)
           if (this.reporter) {
             this.reporter.notify(e)
           }
@@ -123,6 +129,7 @@ export default class E2EETransformer {
           }
         } catch (e) {
           logger.error(e.stack)
+          this.emitter.emit('error:decryption', e)
           if (this.reporter) {
             this.reporter.notify(e)
           }
@@ -130,5 +137,13 @@ export default class E2EETransformer {
         }
       }
     }
+  }
+
+  onEncryptionError(callback: (e: Error) => any) {
+    return this.emitter.on('error:encryption', callback)
+  }
+
+  onDecryptionError(callback: (e: Error) => any) {
+    return this.emitter.on('error:decryption', callback)
   }
 }
