@@ -16,11 +16,9 @@ const privateProps = function(object: Object): InternalProps {
 export default class E2EETransformer {
   emitter: Emitter
   crypto: InkdropEncryption
-  reporter: ?Object
 
-  constructor(crypto: InkdropEncryption, reporter: ?Object) {
+  constructor(crypto: InkdropEncryption) {
     this.crypto = crypto
-    this.reporter = reporter
     this.emitter = new Emitter()
   }
 
@@ -63,9 +61,6 @@ export default class E2EETransformer {
         } catch (e) {
           logger.error(e.stack)
           this.emitter.emit('error:encryption', e)
-          if (this.reporter) {
-            this.reporter.notify(e)
-          }
           throw e
         }
       },
@@ -98,9 +93,6 @@ export default class E2EETransformer {
         } catch (e) {
           logger.error(e.stack)
           this.emitter.emit('error:decryption', e)
-          if (this.reporter) {
-            this.reporter.notify(e)
-          }
           throw e
         }
       }
@@ -130,9 +122,6 @@ export default class E2EETransformer {
         } catch (e) {
           logger.error(e.stack)
           this.emitter.emit('error:decryption', e)
-          if (this.reporter) {
-            this.reporter.notify(e)
-          }
           throw e
         }
       }
