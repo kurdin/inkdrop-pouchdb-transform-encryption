@@ -26,7 +26,11 @@ export default class E2EETransformer {
   }
 
   setKey(key: string) {
-    privateProps(this).key = key
+    if (typeof key === 'string' && key.match(/^[a-f0-9]{32}$/)) {
+      privateProps(this).key = key
+    } else {
+      throw new Error('Invalid encryption key')
+    }
   }
 
   getRemoteTransformer = () => {
