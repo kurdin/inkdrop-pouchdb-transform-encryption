@@ -17,7 +17,7 @@ export type TransformErrorDetail = { error: Error, doc: Object }
 export type TransformErrorCallback = (detail: TransformErrorDetail) => any
 
 export default class E2EETransformer {
-  emitter: Emitter
+  emitter: any
   crypto: InkdropEncryption
 
   constructor(crypto: InkdropEncryption) {
@@ -33,7 +33,7 @@ export default class E2EETransformer {
     }
   }
 
-  getRemoteTransformer = () => {
+  getRemoteTransformer: Function = (): Object => {
     return {
       incoming: (doc: Object) => {
         try {
@@ -106,7 +106,7 @@ export default class E2EETransformer {
     }
   }
 
-  getLocalTransformer = () => {
+  getLocalTransformer: Function = (): Object => {
     return {
       incoming: (doc: Object) => {
         try {
@@ -135,11 +135,11 @@ export default class E2EETransformer {
     }
   }
 
-  onEncryptionError(callback: TransformErrorCallback) {
+  onEncryptionError(callback: TransformErrorCallback): any {
     return this.emitter.on('error:encryption', callback)
   }
 
-  onDecryptionError(callback: TransformErrorCallback) {
+  onDecryptionError(callback: TransformErrorCallback): any {
     return this.emitter.on('error:decryption', callback)
   }
 }

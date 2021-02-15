@@ -1,6 +1,6 @@
 // @flow
 import debug from 'debug'
-const logger = {}
+const logger: Object = {}
 
 logger.debug = debug('inkdrop-crypto:debug')
 logger.info = debug('inkdrop-crypto:info')

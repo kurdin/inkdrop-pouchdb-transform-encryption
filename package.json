@@ -46,9 +46,9 @@
     "transform-pouch": "^1.1.5"
   },
   "dependencies": {
-    "debug": "^4.1.1",
+    "debug": "^4.3.1",
     "event-kit": "^2.5.3",
-    "inkdrop-model": "^2.4.2"
+    "inkdrop-model": "^2.5.0"
   },
   "peerDependencies": {
     "inkdrop-crypto": "^2.0.1"
