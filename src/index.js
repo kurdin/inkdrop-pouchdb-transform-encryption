@@ -8,7 +8,7 @@ type InternalProps = {
   key?: string
 }
 const map = new WeakMap()
-const privateProps = function(object: Object): InternalProps {
+const privateProps = function (object: Object): InternalProps {
   if (!map.has(object)) map.set(object, {})
   return map.get(object) || {}
 }

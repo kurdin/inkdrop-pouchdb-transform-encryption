@@ -29,25 +29,25 @@ let key: string
 const dbUrl = `http://localhost:${serverPort}/user-test`
 const remote = new PouchDB(dbUrl)
 
-test.before('Prepare crypto', async t => {
+test.before('Prepare crypto', async (t) => {
   keyMasked = await crypto.createEncryptionKey(pass, 128)
   key = await crypto.revealEncryptionKey(pass, keyMasked)
   t.is(typeof keyMasked, 'object')
   t.is(typeof key, 'string')
 })
 
-test.before('PouchDB loaded', t => {
+test.before('PouchDB loaded', (t) => {
   t.is(typeof remote, 'object')
   t.is(typeof local, 'object')
 })
 
-test.before('Launch PouchDB server', async t => {
+test.before('Launch PouchDB server', async (t) => {
   server.use('/', pouchDBServer)
   server.listen(serverPort)
   t.pass()
 })
 
-test.serial('Initialize transformer', async t => {
+test.serial('Initialize transformer', async (t) => {
   const transformer = new E2EETransformer(crypto)
   t.is(typeof transformer, 'object')
   transformer.setKey(key)
@@ -55,7 +55,7 @@ test.serial('Initialize transformer', async t => {
   local.transform(transformer.getLocalTransformer())
 })
 
-test.serial('Encrypt note', async t => {
+test.serial('Encrypt note', async (t) => {
   await remote.bulkDocs([
     {
       doctype: 'markdown',
@@ -86,7 +86,7 @@ test.serial('Encrypt note', async t => {
   t.is(typeof plain.body, 'string')
 })
 
-test.serial('Encrypt book', async t => {
+test.serial('Encrypt book', async (t) => {
   await remote.bulkDocs([
     {
       updatedAt: 1475495470492,
@@ -109,7 +109,7 @@ test.serial('Encrypt book', async t => {
   t.is(typeof plain.name, 'string')
 })
 
-test.serial('Encrypt tag', async t => {
+test.serial('Encrypt tag', async (t) => {
   await remote.bulkDocs([
     {
       count: 1,
@@ -131,7 +131,7 @@ test.serial('Encrypt tag', async t => {
   t.is(typeof plain.name, 'string')
 })
 
-test.serial('Encrypt file', async t => {
+test.serial('Encrypt file', async (t) => {
   const srcFile = {
     _id: 'file:test',
     name: 'test.txt',
@@ -168,7 +168,7 @@ test.serial('Encrypt file', async t => {
   t.is(plain._attachments.index.data, srcFile._attachments.index.data)
 })
 
-test.serial('Sync', async t => {
+test.serial('Sync', async (t) => {
   local.transform({
     incoming: (doc: Object) => {
       t.log('Store doc in local', doc)
@@ -180,7 +180,7 @@ test.serial('Sync', async t => {
     local.replicate
       .from(remote, { live: false })
       .on('complete', resolve)
-      .on('error', err => {
+      .on('error', (err) => {
         t.log('Failed to replicate from remote:', err)
         reject(err)
       })
@@ -217,7 +217,7 @@ test.serial('Sync', async t => {
     local.replicate
       .to(remote, { live: false })
       .on('complete', resolve)
-      .on('error', err => {
+      .on('error', (err) => {
         t.log('Failed to replicate to remote:', err)
         reject(err)
       })
@@ -246,6 +246,6 @@ test.serial('Sync', async t => {
   )
   t.log(
     'All docs in remote:',
-    data.rows.map(row => row.doc)
+    data.rows.map((row) => row.doc)
   )
 })
