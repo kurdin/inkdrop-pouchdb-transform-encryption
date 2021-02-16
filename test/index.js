@@ -3,11 +3,13 @@ import test from 'ava'
 import PouchDB from 'pouchdb'
 import express from 'express'
 import memdown from 'memdown'
-import createEncryptionHelper from 'inkdrop-crypto'
+import createEncryptHelperForNode from 'inkdrop-crypto'
 import E2EETransformer from '../src/'
 import axios from 'axios'
+import type { MaskedEncryptionKey } from 'inkdrop-crypto'
 
-PouchDB.plugin(require('transform-pouch'))
+global.require = require
+PouchDB.plugin(require('@craftzdog/transform-pouch'))
 PouchDB.plugin(require('pouchdb-adapter-memory'))
 const InMemPouchDB = PouchDB.defaults({ db: memdown })
 
@@ -19,13 +21,20 @@ const server = express()
 
 const local = new PouchDB('local', { adapter: 'memory' })
 
-const crypto = createEncryptionHelper(require('crypto'))
+const crypto = createEncryptHelperForNode()
 const pass = 'foo'
-const keyMasked = crypto.createEncryptionKey(pass, 128)
-const key = crypto.revealEncryptionKey(pass, keyMasked)
+let keyMasked: MaskedEncryptionKey
+let key: string
 
 const dbUrl = `http://localhost:${serverPort}/user-test`
 const remote = new PouchDB(dbUrl)
+
+test.before('Prepare crypto', async t => {
+  keyMasked = await crypto.createEncryptionKey(pass, 128)
+  key = await crypto.revealEncryptionKey(pass, keyMasked)
+  t.is(typeof keyMasked, 'object')
+  t.is(typeof key, 'string')
+})
 
 test.before('PouchDB loaded', t => {
   t.is(typeof remote, 'object')
@@ -171,7 +180,10 @@ test.serial('Sync', async t => {
     local.replicate
       .from(remote, { live: false })
       .on('complete', resolve)
-      .on('error', reject)
+      .on('error', err => {
+        t.log('Failed to replicate from remote:', err)
+        reject(err)
+      })
   })
 
   const plain = await local.get('note:welcome')
@@ -205,7 +217,10 @@ test.serial('Sync', async t => {
     local.replicate
       .to(remote, { live: false })
       .on('complete', resolve)
-      .on('error', reject)
+      .on('error', err => {
+        t.log('Failed to replicate to remote:', err)
+        reject(err)
+      })
   })
 
   const { data: encrypted } = await axios.get(

@@ -26,16 +26,16 @@ export default class E2EETransformer {
   }
 
   setKey(key: string) {
-    if (typeof key === 'string' && key.match(/^[a-f0-9]{32}$/)) {
+    if (typeof key === 'string' && key.match(/^[a-zA-Z0-9+/=]{32}$/)) {
       privateProps(this).key = key
     } else {
-      throw new Error('Invalid encryption key')
+      throw new Error(`Invalid encryption key: ${key}`)
     }
   }
 
   getRemoteTransformer: Function = (): Object => {
     return {
-      incoming: (doc: Object) => {
+      incoming: async (doc: Object) => {
         try {
           const { key } = privateProps(this)
           if (!key) throw new EncryptError('No encryption key')
@@ -72,7 +72,7 @@ export default class E2EETransformer {
         }
       },
 
-      outgoing: (doc: Object) => {
+      outgoing: async (doc: Object) => {
         try {
           const { key } = privateProps(this)
           if (!key) throw new DecryptError('No encryption key')
@@ -108,7 +108,7 @@ export default class E2EETransformer {
 
   getLocalTransformer: Function = (): Object => {
     return {
-      incoming: (doc: Object) => {
+      incoming: async (doc: Object) => {
         try {
           const { key } = privateProps(this)
           if (!key) throw new EncryptError('No encryption key')
