@@ -15,6 +15,10 @@ const privateProps = function (object: Object): InternalProps {
 
 export type TransformErrorDetail = { error: Error, doc: Object }
 export type TransformErrorCallback = (detail: TransformErrorDetail) => any
+export type CustomTransformer = {
+  incoming: (doc: Object) => Promise<Object> | Object,
+  outgoing: (doc: Object) => Promise<Object> | Object
+}
 
 export default class E2EETransformer {
   emitter: any
@@ -33,12 +37,19 @@ export default class E2EETransformer {
     }
   }
 
-  getRemoteTransformer: Function = (): Object => {
+  getRemoteTransformer: Function = (
+    customTransformer: ?CustomTransformer
+  ): Object => {
+    const { incoming: customIncoming, outgoing: customOutgoing } =
+      customTransformer || {}
     return {
       incoming: async (doc: Object) => {
         try {
           const { key } = privateProps(this)
           if (!key) throw new EncryptError('No encryption key')
+          if (customIncoming) {
+            doc = await customIncoming(doc)
+          }
           if (doc._id.startsWith('file:')) {
             if (doc.publicIn && doc.publicIn.length > 0) {
               logger.debug('The file is in public. Skip encrypting:', doc._id)
@@ -76,16 +87,17 @@ export default class E2EETransformer {
         try {
           const { key } = privateProps(this)
           if (!key) throw new DecryptError('No encryption key')
+          let decryptedDoc
           if (doc._id.startsWith('file:')) {
             logger.debug('Decrypting file:', doc._id)
             if (doc._attachments && doc._attachments.index) {
               if (doc._attachments.index.stub) {
-                return doc
+                decryptedDoc = doc
               } else {
-                return this.crypto.decryptFile(key, doc)
+                decryptedDoc = await this.crypto.decryptFile(key, doc)
               }
             } else {
-              return doc
+              decryptedDoc = doc
             }
           } else if (
             doc._id.startsWith('note:') ||
@@ -93,10 +105,12 @@ export default class E2EETransformer {
             doc._id.startsWith('tag:')
           ) {
             logger.debug('Decrypting doc:', doc._id)
-            return this.crypto.decryptDoc(key, doc)
+            decryptedDoc = await this.crypto.decryptDoc(key, doc)
           } else {
-            return doc
+            decryptedDoc = doc
           }
+
+          return customOutgoing ? customOutgoing(decryptedDoc) : decryptedDoc
         } catch (e) {
           logger.error(e.stack)
           this.emitter.emit('error:decryption', { error: e, doc })
@@ -113,11 +127,11 @@ export default class E2EETransformer {
           const { key } = privateProps(this)
           if (!key) throw new EncryptError('No encryption key')
           if (doc._id.startsWith('file:')) {
-            logger.debug('Decrypting local file:', doc._id)
             if (doc._attachments && doc._attachments.index) {
               if (doc._attachments.index.stub) {
                 return doc
               } else {
+                logger.debug('Decrypting local file:', doc._id)
                 return this.crypto.decryptFile(key, doc)
               }
             } else {
