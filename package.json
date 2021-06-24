@@ -1,6 +1,6 @@
 {
   "name": "inkdrop-pouchdb-transform-encryption",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "PouchDB plugin for adding end-to-end encryption capability for Inkdrop",
   "main": "lib/index.js",
   "scripts": {
