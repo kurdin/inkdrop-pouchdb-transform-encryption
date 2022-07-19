@@ -1,5 +1,3 @@
-// @flow
-import test from 'ava'
 import PouchDB from 'pouchdb'
 import express from 'express'
 import memdown from 'memdown'
@@ -7,55 +5,54 @@ import createEncryptHelperForNode from 'inkdrop-crypto'
 import E2EETransformer from '../src/'
 import axios from 'axios'
 import type { MaskedEncryptionKey } from 'inkdrop-crypto'
-
 global.require = require
 PouchDB.plugin(require('@craftzdog/transform-pouch'))
 PouchDB.plugin(require('pouchdb-adapter-memory'))
-const InMemPouchDB = PouchDB.defaults({ db: memdown })
+const InMemPouchDB = PouchDB.defaults({
+  db: memdown
+})
+const serverPort = parseInt(process.env.PORT || '3005')
 
-const serverPort = parseInt(process.env.PORT) || 3005
 const pouchDBServer = require('express-pouchdb')(InMemPouchDB, {
   inMemoryConfig: true
 })
+
 const server = express()
-
-const local = new PouchDB('local', { adapter: 'memory' })
-
+const local = new PouchDB('local', {
+  adapter: 'memory'
+})
 const crypto = createEncryptHelperForNode()
 const pass = 'foo'
 let keyMasked: MaskedEncryptionKey
 let key: string
-
 const dbUrl = `http://localhost:${serverPort}/user-test`
 const remote = new PouchDB(dbUrl)
 
-test.before('Prepare crypto', async (t) => {
+// Prepare crypto
+beforeAll(async () => {
   keyMasked = await crypto.createEncryptionKey(pass, 128)
   key = await crypto.revealEncryptionKey(pass, keyMasked)
-  t.is(typeof keyMasked, 'object')
-  t.is(typeof key, 'string')
+  expect(typeof keyMasked).toBe('object')
+  expect(typeof key).toBe('string')
 })
-
-test.before('PouchDB loaded', (t) => {
-  t.is(typeof remote, 'object')
-  t.is(typeof local, 'object')
+// PouchDB loaded
+beforeAll(() => {
+  expect(typeof remote).toBe('object')
+  expect(typeof local).toBe('object')
 })
-
-test.before('Launch PouchDB server', async (t) => {
+// Launch PouchDB server
+beforeAll(async () => {
   server.use('/', pouchDBServer)
   server.listen(serverPort)
-  t.pass()
 })
-
-test.serial('Initialize transformer', async (t) => {
+test('Initialize transformer', async () => {
   const transformer = new E2EETransformer(crypto)
-  t.is(typeof transformer, 'object')
+  expect(typeof transformer).toBe('object')
   transformer.setKey(key)
   remote.transform(transformer.getRemoteTransformer())
   local.transform(transformer.getLocalTransformer())
 })
-
-test.serial('Encrypt note', async (t) => {
+test('Encrypt note', async () => {
   await remote.bulkDocs([
     {
       doctype: 'markdown',
@@ -71,21 +68,19 @@ test.serial('Encrypt note', async (t) => {
     }
   ])
   const { data: encrypted } = await axios.get(`${dbUrl}/note:welcome`)
-  t.is(typeof encrypted, 'object')
-  t.is(typeof encrypted.encryptedData, 'object')
-  t.is(encrypted.encryptedData.algorithm, 'aes-256-gcm')
-  t.is(typeof encrypted.encryptedData.content, 'string')
-  t.is(typeof encrypted.encryptedData.iv, 'string')
-  t.is(typeof encrypted.encryptedData.tag, 'string')
-  t.is(typeof encrypted.title, 'undefined')
-  t.is(typeof encrypted.body, 'undefined')
-
+  expect(typeof encrypted).toBe('object')
+  expect(typeof encrypted.encryptedData).toBe('object')
+  expect(encrypted.encryptedData.algorithm).toBe('aes-256-gcm')
+  expect(typeof encrypted.encryptedData.content).toBe('string')
+  expect(typeof encrypted.encryptedData.iv).toBe('string')
+  expect(typeof encrypted.encryptedData.tag).toBe('string')
+  expect(typeof encrypted.title).toBe('undefined')
+  expect(typeof encrypted.body).toBe('undefined')
   const plain = await remote.get('note:welcome')
-  t.is(typeof plain.title, 'string')
-  t.is(typeof plain.body, 'string')
+  expect(typeof plain.title).toBe('string')
+  expect(typeof plain.body).toBe('string')
 })
-
-test.serial('Encrypt book', async (t) => {
+test('Encrypt book', async () => {
   await remote.bulkDocs([
     {
       updatedAt: 1475495470492,
@@ -96,19 +91,17 @@ test.serial('Encrypt book', async (t) => {
     }
   ])
   const { data: encrypted } = await axios.get(`${dbUrl}/book:Sy8EUpkA`)
-  t.is(typeof encrypted, 'object')
-  t.is(typeof encrypted.encryptedData, 'object')
-  t.is(encrypted.encryptedData.algorithm, 'aes-256-gcm')
-  t.is(typeof encrypted.encryptedData.content, 'string')
-  t.is(typeof encrypted.encryptedData.iv, 'string')
-  t.is(typeof encrypted.encryptedData.tag, 'string')
-  t.is(typeof encrypted.name, 'undefined')
-
+  expect(typeof encrypted).toBe('object')
+  expect(typeof encrypted.encryptedData).toBe('object')
+  expect(encrypted.encryptedData.algorithm).toBe('aes-256-gcm')
+  expect(typeof encrypted.encryptedData.content).toBe('string')
+  expect(typeof encrypted.encryptedData.iv).toBe('string')
+  expect(typeof encrypted.encryptedData.tag).toBe('string')
+  expect(typeof encrypted.name).toBe('undefined')
   const plain = await remote.get('book:Sy8EUpkA')
-  t.is(typeof plain.name, 'string')
+  expect(typeof plain.name).toBe('string')
 })
-
-test.serial('Encrypt tag', async (t) => {
+test('Encrypt tag', async () => {
   await remote.bulkDocs([
     {
       count: 1,
@@ -118,19 +111,17 @@ test.serial('Encrypt tag', async (t) => {
     }
   ])
   const { data: encrypted } = await axios.get(`${dbUrl}/tag:HyBgJ94gx`)
-  t.is(typeof encrypted, 'object')
-  t.is(typeof encrypted.encryptedData, 'object')
-  t.is(encrypted.encryptedData.algorithm, 'aes-256-gcm')
-  t.is(typeof encrypted.encryptedData.content, 'string')
-  t.is(typeof encrypted.encryptedData.iv, 'string')
-  t.is(typeof encrypted.encryptedData.tag, 'string')
-  t.is(typeof encrypted.name, 'undefined')
-
+  expect(typeof encrypted).toBe('object')
+  expect(typeof encrypted.encryptedData).toBe('object')
+  expect(encrypted.encryptedData.algorithm).toBe('aes-256-gcm')
+  expect(typeof encrypted.encryptedData.content).toBe('string')
+  expect(typeof encrypted.encryptedData.iv).toBe('string')
+  expect(typeof encrypted.encryptedData.tag).toBe('string')
+  expect(typeof encrypted.name).toBe('undefined')
   const plain = await remote.get('tag:HyBgJ94gx')
-  t.is(typeof plain.name, 'string')
+  expect(typeof plain.name).toBe('string')
 })
-
-test.serial('Encrypt file', async (t) => {
+test('Encrypt file', async () => {
   const srcFile = {
     _id: 'file:test',
     name: 'test.txt',
@@ -149,51 +140,53 @@ test.serial('Encrypt file', async (t) => {
   const { data: encrypted } = await axios.get(
     `${dbUrl}/file:test?attachments=true`,
     {
-      headers: { accept: 'application/json' }
+      headers: {
+        accept: 'application/json'
+      }
     }
   )
-  t.is(typeof encrypted, 'object')
-  t.is(typeof encrypted.encryptionData, 'object')
-  t.is(encrypted.encryptionData.algorithm, 'aes-256-gcm')
-  t.is(typeof encrypted.encryptionData.iv, 'string')
-  t.is(typeof encrypted.encryptionData.tag, 'string')
-  t.is(typeof encrypted._attachments.index.data, 'string')
-  t.is(encrypted.name, srcFile.name)
-
-  const plain = await remote.get('file:test', { attachments: true })
-  t.is(typeof plain.name, 'string')
-  t.is(typeof plain.encryptionData, 'undefined')
-  t.is(plain._attachments.index.data, srcFile._attachments.index.data)
+  expect(typeof encrypted).toBe('object')
+  expect(typeof encrypted.encryptionData).toBe('object')
+  expect(encrypted.encryptionData.algorithm).toBe('aes-256-gcm')
+  expect(typeof encrypted.encryptionData.iv).toBe('string')
+  expect(typeof encrypted.encryptionData.tag).toBe('string')
+  expect(typeof encrypted._attachments.index.data).toBe('string')
+  expect(encrypted.name).toBe(srcFile.name)
+  const plain = await remote.get('file:test', {
+    attachments: true
+  })
+  expect(typeof plain.name).toBe('string')
+  expect(typeof plain.encryptionData).toBe('undefined')
+  expect(plain._attachments.index.data).toBe(srcFile._attachments.index.data)
 })
-
-test.serial('Sync', async (t) => {
+test('Sync', async () => {
   local.transform({
-    incoming: (doc: Object) => {
-      t.log('Store doc in local', doc)
+    incoming: (doc: Record<string, any>) => {
+      console.log('Store doc in local', doc)
       return doc
     }
   })
-
   await new Promise((resolve, reject) => {
     local.replicate
-      .from(remote, { live: false })
+      .from(remote, {
+        live: false
+      })
       .on('complete', resolve)
-      .on('error', (err) => {
-        t.log('Failed to replicate from remote:', err)
+      .on('error', (err: any) => {
+        console.log('Failed to replicate from remote:', err)
         reject(err)
       })
   })
-
   const plain = await local.get('note:welcome')
-  t.is(typeof plain.title, 'string')
-  t.is(typeof plain.body, 'string')
-  t.is(typeof plain.encryptedData, 'undefined')
-
-  const plainFile = await local.get('file:test', { attachments: true })
-  t.is(typeof plainFile.name, 'string')
-  t.is(typeof plainFile.encryptionData, 'undefined')
-  t.is(typeof plainFile._attachments.index.data, 'string')
-
+  expect(typeof plain.title).toBe('string')
+  expect(typeof plain.body).toBe('string')
+  expect(typeof plain.encryptedData).toBe('undefined')
+  const plainFile = await local.get('file:test', {
+    attachments: true
+  })
+  expect(typeof plainFile.name).toBe('string')
+  expect(typeof plainFile.encryptionData).toBe('undefined')
+  expect(typeof plainFile._attachments.index.data).toBe('string')
   const srcFile = {
     _id: 'file:test2',
     name: 'test.png',
@@ -209,40 +202,45 @@ test.serial('Sync', async (t) => {
     }
   }
   await local.put(srcFile)
-
   await new Promise((resolve, reject) => {
     local.replicate
-      .to(remote, { live: false })
+      .to(remote, {
+        live: false
+      })
       .on('complete', resolve)
-      .on('error', (err) => {
-        t.log('Failed to replicate to remote:', err)
+      .on('error', err => {
+        console.log('Failed to replicate to remote:', err)
         reject(err)
       })
   })
-
   const { data: encrypted } = await axios.get(
     `${dbUrl}/file:test2?attachments=true`,
     {
-      headers: { accept: 'application/json' }
+      headers: {
+        accept: 'application/json'
+      }
     }
   )
-  t.is(typeof encrypted, 'object')
-  t.is(typeof encrypted.encryptionData, 'object')
-  t.is(encrypted.encryptionData.algorithm, 'aes-256-gcm')
-  t.is(typeof encrypted.encryptionData.iv, 'string')
-  t.is(typeof encrypted.encryptionData.tag, 'string')
-  t.is(typeof encrypted._attachments.index.data, 'string')
-  t.is(encrypted.name, srcFile.name)
-  t.not(encrypted._attachments.index.data, srcFile._attachments.index.data)
-
+  expect(typeof encrypted).toBe('object')
+  expect(typeof encrypted.encryptionData).toBe('object')
+  expect(encrypted.encryptionData.algorithm).toBe('aes-256-gcm')
+  expect(typeof encrypted.encryptionData.iv).toBe('string')
+  expect(typeof encrypted.encryptionData.tag).toBe('string')
+  expect(typeof encrypted._attachments.index.data).toBe('string')
+  expect(encrypted.name).toBe(srcFile.name)
+  expect(encrypted._attachments.index.data).not.toBe(
+    srcFile._attachments.index.data
+  )
   const { data } = await axios.get(
     `${dbUrl}/_all_docs?include_docs=true&attachments=true`,
     {
-      headers: { accept: 'application/json' }
+      headers: {
+        accept: 'application/json'
+      }
     }
   )
-  t.log(
+  console.log(
     'All docs in remote:',
-    data.rows.map((row) => row.doc)
+    data.rows.map(row => row.doc)
   )
 })

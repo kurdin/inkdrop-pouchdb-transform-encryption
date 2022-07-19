@@ -1,27 +1,32 @@
-// @flow
 import { InkdropEncryption, EncryptError, DecryptError } from 'inkdrop-crypto'
 import logger from './logger'
 import { NOTE_VISIBILITY } from 'inkdrop-model'
-import { Emitter } from 'event-kit'
-
+import { Disposable, Emitter } from 'event-kit'
 type InternalProps = {
   key?: string
 }
 const map = new WeakMap()
-const privateProps = function (object: Object): InternalProps {
+
+const privateProps = function(object: Record<string, any>): InternalProps {
   if (!map.has(object)) map.set(object, {})
   return map.get(object) || {}
 }
 
-export type TransformErrorDetail = { error: Error, doc: Object }
+export type TransformErrorDetail = {
+  error: Error
+  doc: Record<string, any>
+}
 export type TransformErrorCallback = (detail: TransformErrorDetail) => any
 export type CustomTransformer = {
-  incoming: (doc: Object) => Promise<Object> | Object,
-  outgoing: (doc: Object) => Promise<Object> | Object
+  incoming: (
+    doc: Record<string, any>
+  ) => Promise<Record<string, any>> | Record<string, any>
+  outgoing: (
+    doc: Record<string, any>
+  ) => Promise<Record<string, any>> | Record<string, any>
 }
-
 export default class E2EETransformer {
-  emitter: any
+  emitter: Emitter
   crypto: InkdropEncryption
 
   constructor(crypto: InkdropEncryption) {
@@ -37,19 +42,21 @@ export default class E2EETransformer {
     }
   }
 
-  getRemoteTransformer: Function = (
-    customTransformer: ?CustomTransformer
-  ): Object => {
+  getRemoteTransformer: (...args: Array<any>) => any = (
+    customTransformer: CustomTransformer | null | undefined
+  ): Record<string, any> => {
     const { incoming: customIncoming, outgoing: customOutgoing } =
       customTransformer || {}
     return {
-      incoming: async (doc: Object) => {
+      incoming: async (doc: Record<string, any>) => {
         try {
           const { key } = privateProps(this)
           if (!key) throw new EncryptError('No encryption key')
+
           if (customIncoming) {
             doc = await customIncoming(doc)
           }
+
           if (doc._id.startsWith('file:')) {
             if (doc.publicIn && doc.publicIn.length > 0) {
               logger.debug('The file is in public. Skip encrypting:', doc._id)
@@ -76,20 +83,24 @@ export default class E2EETransformer {
           } else {
             return doc
           }
-        } catch (e) {
+        } catch (e: any) {
           logger.error(e.stack)
-          this.emitter.emit('error:encryption', { error: e, doc })
+          this.emitter.emit('error:encryption', {
+            error: e,
+            doc
+          })
           throw e
         }
       },
-
-      outgoing: async (doc: Object) => {
+      outgoing: async (doc: Record<string, any>) => {
         try {
           const { key } = privateProps(this)
           if (!key) throw new DecryptError('No encryption key')
-          let decryptedDoc
+          let decryptedDoc: Record<string, any>
+
           if (doc._id.startsWith('file:')) {
             logger.debug('Decrypting file:', doc._id)
+
             if (doc._attachments && doc._attachments.index) {
               if (doc._attachments.index.stub) {
                 decryptedDoc = doc
@@ -111,21 +122,27 @@ export default class E2EETransformer {
           }
 
           return customOutgoing ? customOutgoing(decryptedDoc) : decryptedDoc
-        } catch (e) {
+        } catch (e: any) {
           logger.error(e.stack)
-          this.emitter.emit('error:decryption', { error: e, doc })
+          this.emitter.emit('error:decryption', {
+            error: e,
+            doc
+          })
           throw e
         }
       }
     }
   }
-
-  getLocalTransformer: Function = (): Object => {
+  getLocalTransformer: (...args: Array<any>) => any = (): Record<
+    string,
+    any
+  > => {
     return {
-      incoming: async (doc: Object) => {
+      incoming: async (doc: Record<string, any>) => {
         try {
           const { key } = privateProps(this)
           if (!key) throw new EncryptError('No encryption key')
+
           if (doc._id.startsWith('file:')) {
             if (doc._attachments && doc._attachments.index) {
               if (doc._attachments.index.stub) {
@@ -140,20 +157,23 @@ export default class E2EETransformer {
           } else {
             return doc
           }
-        } catch (e) {
+        } catch (e: any) {
           logger.error(e.stack)
-          this.emitter.emit('error:decryption', { error: e, doc })
+          this.emitter.emit('error:decryption', {
+            error: e,
+            doc
+          })
           throw e
         }
       }
     }
   }
 
-  onEncryptionError(callback: TransformErrorCallback): any {
+  onEncryptionError(callback: TransformErrorCallback): Disposable {
     return this.emitter.on('error:encryption', callback)
   }
 
-  onDecryptionError(callback: TransformErrorCallback): any {
+  onDecryptionError(callback: TransformErrorCallback): Disposable {
     return this.emitter.on('error:decryption', callback)
   }
 }
