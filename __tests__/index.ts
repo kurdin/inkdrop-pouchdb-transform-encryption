@@ -4,16 +4,19 @@ import memdown from 'memdown'
 import createEncryptHelperForNode from 'inkdrop-crypto'
 import E2EETransformer from '../src/'
 import axios from 'axios'
+import TransformPouch from '@craftzdog/transform-pouch'
+import InMemAdapter from 'pouchdb-adapter-memory'
+import ExpressPouchDB from 'express-pouchdb'
 import type { MaskedEncryptionKey } from 'inkdrop-crypto'
 global.require = require
-PouchDB.plugin(require('@craftzdog/transform-pouch'))
-PouchDB.plugin(require('pouchdb-adapter-memory'))
+PouchDB.plugin(TransformPouch)
+PouchDB.plugin(InMemAdapter)
 const InMemPouchDB = PouchDB.defaults({
   db: memdown
 })
 const serverPort = parseInt(process.env.PORT || '3005')
 
-const pouchDBServer = require('express-pouchdb')(InMemPouchDB, {
+const pouchDBServer = ExpressPouchDB(InMemPouchDB, {
   inMemoryConfig: true
 })
 
